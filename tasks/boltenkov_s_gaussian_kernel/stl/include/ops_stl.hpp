@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstddef>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
@@ -21,8 +22,8 @@ class BoltenkovSGaussianKernelSTL : public BaseTask {
   bool PreProcessingImpl() override;
   bool RunImpl() override;
   bool PostProcessingImpl() override;
-  void CopyRowsToPaddedBuffer(const std::vector<std::vector<int>> &data, std::vector<std::vector<int>> &tmp_data,
-                              std::size_t n, unsigned int num_threads);
+  static void CopyRowsToPaddedBuffer(const std::vector<std::vector<int>> &data, std::vector<std::vector<int>> &tmp_data,
+                                     std::size_t n, unsigned int num_threads);
   void ApplyGaussianKernel(const std::vector<std::vector<int>> &tmp_data, std::vector<std::vector<int>> &res,
                            std::size_t n, std::size_t m, unsigned int num_threads);
 };
