@@ -43,7 +43,6 @@ bool BoltenkovSGaussianKernelTBB::PreProcessingImpl() {
 bool BoltenkovSGaussianKernelTBB::RunImpl() {
   std::size_t n = std::get<0>(GetInput());
   std::size_t m = std::get<1>(GetInput());
-
   std::vector<std::vector<int>> data = std::get<2>(GetInput());
   std::vector<std::vector<int>> tmp_data(n + 2, std::vector<int>(m + 2, 0));
   std::vector<std::vector<int>> &res = GetOutput();
