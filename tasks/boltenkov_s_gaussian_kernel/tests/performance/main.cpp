@@ -12,6 +12,7 @@
 #include "boltenkov_s_gaussian_kernel/omp/include/ops_omp.hpp"
 #include "boltenkov_s_gaussian_kernel/seq/include/ops_seq.hpp"
 #include "boltenkov_s_gaussian_kernel/stl/include/ops_stl.hpp"
+#include "boltenkov_s_gaussian_kernel/tbb/include/ops_tbb.hpp"
 #include "util/include/perf_test_util.hpp"
 #include "util/include/util.hpp"
 
@@ -77,9 +78,9 @@ TEST_P(BoltenkovSRunPerfTestProcesses, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BoltenkovSGaussianKernelSEQ, BoltenkovSGaussianKernelOMP,
-                                BoltenkovSGaussianKernelSTL>(PPC_SETTINGS_boltenkov_s_gaussian_kernel);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BoltenkovSGaussianKernelSEQ, BoltenkovSGaussianKernelOMP,
+                                                       BoltenkovSGaussianKernelTBB, BoltenkovSGaussianKernelSTL>(
+    PPC_SETTINGS_boltenkov_s_gaussian_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
