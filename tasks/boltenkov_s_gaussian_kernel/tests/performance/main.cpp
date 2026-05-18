@@ -8,6 +8,7 @@
 #include <utility>
 #include <vector>
 
+#include "boltenkov_s_gaussian_kernel/all/include/ops_all.hpp"
 #include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
 #include "boltenkov_s_gaussian_kernel/omp/include/ops_omp.hpp"
 #include "boltenkov_s_gaussian_kernel/seq/include/ops_seq.hpp"
@@ -25,7 +26,7 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
     }
-    constexpr std::size_t kMaxSize = 1000;
+    constexpr std::size_t kMaxSize = 2000;
     int m = -1;
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
@@ -77,9 +78,9 @@ TEST_P(BoltenkovSRunPerfTestProcesses, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks =
-    ppc::util::MakeAllPerfTasks<InType, BoltenkovSGaussianKernelSEQ, BoltenkovSGaussianKernelOMP,
-                                BoltenkovSGaussianKernelTBB>(PPC_SETTINGS_boltenkov_s_gaussian_kernel);
+const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BoltenkovSGaussianKernelALL, BoltenkovSGaussianKernelSEQ,
+                                                       BoltenkovSGaussianKernelOMP, BoltenkovSGaussianKernelTBB>(
+    PPC_SETTINGS_boltenkov_s_gaussian_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 
