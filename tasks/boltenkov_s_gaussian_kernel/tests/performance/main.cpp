@@ -26,7 +26,7 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
     }
-    constexpr std::size_t kMaxSize = 2000;
+    constexpr std::size_t kMaxSize = 1000;
     int m = -1;
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
