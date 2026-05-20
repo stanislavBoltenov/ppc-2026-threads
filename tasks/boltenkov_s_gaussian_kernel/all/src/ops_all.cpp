@@ -4,8 +4,10 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
+#include "boltenkov_s_gaussian_kernel/common/include/common.hpp"
 #include "util/include/util.hpp"
 
 namespace boltenkov_s_gaussian_kernel {
@@ -44,15 +46,20 @@ bool BoltenkovSGaussianKernelALL::ValidationImpl() {
 }
 
 bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
-  int rank;
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+  int n = 0, m = 0;
   if (rank == 0) {
-    std::size_t n = std::get<0>(GetInput());
-    std::size_t m = std::get<1>(GetInput());
-    GetOutput().resize(n);
-    for (std::size_t i = 0; i < n; ++i) {
-      GetOutput()[i].resize(m);
-    }
+    n = static_cast<int>(std::get<0>(GetInput()));
+    m = static_cast<int>(std::get<1>(GetInput()));
+  }
+  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput().resize(n);
+  for (int i = 0; i < n; ++i) {
+    GetOutput()[i].resize(m);
   }
   return true;
 }
@@ -209,6 +216,16 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   }
 
   GatherResults(local_res, local_start_row, local_rows, m, rank, size);
+
+  if (rank == 0) {
+    for (int i = 0; i < n; ++i) {
+      MPI_Bcast(GetOutput()[i].data(), m, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+  } else {
+    for (int i = 0; i < n; ++i) {
+      MPI_Bcast(GetOutput()[i].data(), m, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+  }
   return true;
 }
 
