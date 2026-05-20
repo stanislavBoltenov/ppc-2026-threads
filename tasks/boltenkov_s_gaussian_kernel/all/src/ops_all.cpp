@@ -183,41 +183,40 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   int local_start_row = 0, local_rows = 0;
   ScatterRows(global_data, local_halo, local_start_row, local_rows, m, rank, size);
 
-  if (local_rows == 0) {
-    GatherResults(std::vector<std::vector<int>>(), 0, 0, m, rank, size);
-    return true;
-  }
+  std::vector<std::vector<int>> local_res;
+  if (local_rows > 0) {
+    int halo_first = std::max(0, local_start_row - 1);
+    int halo_rows = static_cast<int>(local_halo.size());
+    std::vector<std::vector<int>> tmp(local_rows + 2, std::vector<int>(m + 2, 0));
 
-  int halo_first = std::max(0, local_start_row - 1);
-  int halo_rows = static_cast<int>(local_halo.size());
-  std::vector<std::vector<int>> tmp(local_rows + 2, std::vector<int>(m + 2, 0));
-
-  for (int i = 0; i < local_rows + 2; ++i) {
-    int global_row = local_start_row - 1 + i;
-    if (global_row >= halo_first && global_row < halo_first + halo_rows) {
-      std::copy(local_halo[global_row - halo_first].begin(), local_halo[global_row - halo_first].end(),
-                tmp[i].begin() + 1);
+    for (int i = 0; i < local_rows + 2; ++i) {
+      int global_row = local_start_row - 1 + i;
+      if (global_row >= halo_first && global_row < halo_first + halo_rows) {
+        std::copy(local_halo[global_row - halo_first].begin(), local_halo[global_row - halo_first].end(),
+                  tmp[i].begin() + 1);
+      }
     }
-  }
 
-  std::vector<std::vector<int>> local_res(local_rows, std::vector<int>(m, 0));
-  auto kernel = kernel_;
-  int shift = shift_;
+    local_res.resize(local_rows, std::vector<int>(m, 0));
+    auto kernel = kernel_;
+    int shift = shift_;
 
 #pragma omp parallel for num_threads(ppc::util::GetNumThreads()) default(none) \
     shared(tmp, local_res, local_rows, m, kernel, shift)
-  for (int i = 0; i < local_rows; ++i) {
-    for (int j = 1; j <= m; ++j) {
-      int val = (tmp[i][j - 1] * kernel[0][0]) + (tmp[i][j] * kernel[0][1]) + (tmp[i][j + 1] * kernel[0][2]) +
-                (tmp[i + 1][j - 1] * kernel[1][0]) + (tmp[i + 1][j] * kernel[1][1]) +
-                (tmp[i + 1][j + 1] * kernel[1][2]) + (tmp[i + 2][j - 1] * kernel[2][0]) +
-                (tmp[i + 2][j] * kernel[2][1]) + (tmp[i + 2][j + 1] * kernel[2][2]);
-      local_res[i][j - 1] = val >> shift;
+    for (int i = 0; i < local_rows; ++i) {
+      for (int j = 1; j <= m; ++j) {
+        int val = (tmp[i][j - 1] * kernel[0][0]) + (tmp[i][j] * kernel[0][1]) + (tmp[i][j + 1] * kernel[0][2]) +
+                  (tmp[i + 1][j - 1] * kernel[1][0]) + (tmp[i + 1][j] * kernel[1][1]) +
+                  (tmp[i + 1][j + 1] * kernel[1][2]) + (tmp[i + 2][j - 1] * kernel[2][0]) +
+                  (tmp[i + 2][j] * kernel[2][1]) + (tmp[i + 2][j + 1] * kernel[2][2]);
+        local_res[i][j - 1] = val >> shift;
+      }
     }
   }
 
   GatherResults(local_res, local_start_row, local_rows, m, rank, size);
 
+  // Теперь все процессы обязательно участвуют в Bcast
   if (rank == 0) {
     for (int i = 0; i < n; ++i) {
       MPI_Bcast(GetOutput()[i].data(), m, MPI_INT, 0, MPI_COMM_WORLD);
