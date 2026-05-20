@@ -12,7 +12,7 @@
 
 namespace boltenkov_s_gaussian_kernel {
 
-BoltenkovSGaussianKernelALL::BoltenkovSGaussianKernelALL(const InType& in)
+BoltenkovSGaussianKernelALL::BoltenkovSGaussianKernelALL(const InType &in)
     : kernel_{{{1, 2, 1}, {2, 4, 2}, {1, 2, 1}}} {
   SetTypeOfTask(GetStaticTypeOfTask());
   int rank;
@@ -31,7 +31,7 @@ bool BoltenkovSGaussianKernelALL::ValidationImpl() {
   if (rank == 0) {
     std::size_t n = std::get<0>(GetInput());
     std::size_t m = std::get<1>(GetInput());
-    const auto& data = std::get<2>(GetInput());
+    const auto &data = std::get<2>(GetInput());
     if (data.size() != n) {
       return false;
     }
@@ -64,7 +64,7 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   return true;
 }
 
-void BoltenkovSGaussianKernelALL::BcastSizes(int& n, int& m, int rank) {
+void BoltenkovSGaussianKernelALL::BcastSizes(int &n, int &m, int rank) {
   if (rank == 0) {
     n = static_cast<int>(std::get<0>(GetInput()));
     m = static_cast<int>(std::get<1>(GetInput()));
@@ -73,9 +73,9 @@ void BoltenkovSGaussianKernelALL::BcastSizes(int& n, int& m, int rank) {
   MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
 }
 
-void BoltenkovSGaussianKernelALL::ScatterRows(const std::vector<std::vector<int>>& global_data,
-                                              std::vector<std::vector<int>>& local_halo, int& local_start_row,
-                                              int& local_rows, int m, int rank, int size) {
+void BoltenkovSGaussianKernelALL::ScatterRows(const std::vector<std::vector<int>> &global_data,
+                                              std::vector<std::vector<int>> &local_halo, int &local_start_row,
+                                              int &local_rows, int m, int rank, int size) {
   int n = static_cast<int>(global_data.size());
   int rows_per_proc = (n + size - 1) / size;
 
@@ -101,8 +101,8 @@ void BoltenkovSGaussianKernelALL::ScatterRows(const std::vector<std::vector<int>
       MPI_Send(&p_start, 1, MPI_INT, p, 2, MPI_COMM_WORLD);
       MPI_Send(&p_rows, 1, MPI_INT, p, 3, MPI_COMM_WORLD);
       for (int i = 0; i < p_halo_rows; ++i) {
-        const auto& row = global_data[p_halo_first + i];
-        MPI_Send(const_cast<int*>(row.data()), m, MPI_INT, p, 4 + i, MPI_COMM_WORLD);
+        const auto &row = global_data[p_halo_first + i];
+        MPI_Send(const_cast<int *>(row.data()), m, MPI_INT, p, 4 + i, MPI_COMM_WORLD);
       }
     }
 
@@ -133,7 +133,7 @@ void BoltenkovSGaussianKernelALL::ScatterRows(const std::vector<std::vector<int>
   }
 }
 
-void BoltenkovSGaussianKernelALL::GatherResults(const std::vector<std::vector<int>>& local_res, int local_start_row,
+void BoltenkovSGaussianKernelALL::GatherResults(const std::vector<std::vector<int>> &local_res, int local_start_row,
                                                 int local_rows, int m, int rank, int size) {
   if (rank == 0) {
     for (int i = 0; i < local_rows; ++i) {
@@ -160,7 +160,7 @@ void BoltenkovSGaussianKernelALL::GatherResults(const std::vector<std::vector<in
       MPI_Send(&local_rows, 1, MPI_INT, 0, 10, MPI_COMM_WORLD);
       MPI_Send(&local_start_row, 1, MPI_INT, 0, 11, MPI_COMM_WORLD);
       for (int i = 0; i < local_rows; ++i) {
-        MPI_Send(const_cast<int*>(local_res[i].data()), m, MPI_INT, 0, 12 + i, MPI_COMM_WORLD);
+        MPI_Send(const_cast<int *>(local_res[i].data()), m, MPI_INT, 0, 12 + i, MPI_COMM_WORLD);
       }
     } else {
       int zero = 0;
@@ -178,7 +178,7 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   int m = static_cast<int>(GetOutput()[0].size());
   BcastSizes(n, m, rank);
 
-  const auto& global_data = (rank == 0) ? std::get<2>(GetInput()) : std::vector<std::vector<int>>();
+  const auto &global_data = (rank == 0) ? std::get<2>(GetInput()) : std::vector<std::vector<int>>();
   std::vector<std::vector<int>> local_halo;
   int local_start_row = 0, local_rows = 0;
   ScatterRows(global_data, local_halo, local_start_row, local_rows, m, rank, size);
