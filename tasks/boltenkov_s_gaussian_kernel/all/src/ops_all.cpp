@@ -46,20 +46,20 @@ bool BoltenkovSGaussianKernelALL::ValidationImpl() {
 }
 
 bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
-  int rank, size;
+  int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  int n = 0, m = 0;
-  if (rank == 0) {
-    n = static_cast<int>(std::get<0>(GetInput()));
-    m = static_cast<int>(std::get<1>(GetInput()));
-  }
-  MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
-  MPI_Bcast(&m, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  GetOutput().resize(n);
-  for (int i = 0; i < n; ++i) {
-    GetOutput()[i].resize(m);
+  int n_val = 0, m_val = 0;
+  if (rank == 0) {
+    n_val = static_cast<int>(std::get<0>(GetInput()));
+    m_val = static_cast<int>(std::get<1>(GetInput()));
+  }
+  MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
+  MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+  GetOutput().resize(n_val);
+  for (int i = 0; i < n_val; ++i) {
+    GetOutput()[i].resize(m_val);
   }
   return true;
 }
@@ -174,7 +174,8 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int n = 0, m = 0;
+  int n = static_cast<int>(GetOutput().size());
+  int m = static_cast<int>(GetOutput()[0].size());
   BcastSizes(n, m, rank);
 
   const auto& global_data = (rank == 0) ? std::get<2>(GetInput()) : std::vector<std::vector<int>>();
