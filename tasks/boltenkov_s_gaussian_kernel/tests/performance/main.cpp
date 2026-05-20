@@ -43,7 +43,7 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Matrix dimensions exceed maximum allowed size (2000)");
     }
 
-    if (std::cmp_less(n, kMinSizeForGen) || m < std::cmp_less(m, kMinSizeForGen)) {
+    if (static_cast<size_t>(n) < kMinSizeForGen || static_cast<size_t>(m) < kMinSizeForGen) {
       n = static_cast<int>(kMaxSize);
       m = static_cast<int>(kMaxSize);
       std::get<0>(data) = static_cast<std::size_t>(n);
