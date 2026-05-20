@@ -108,9 +108,10 @@ TEST_P(BoltenkovSRunPerfTestProcesses, RunPerfModes) {
 
 namespace {
 
-const auto kAllPerfTasks = ppc::util::MakeAllPerfTasks<InType, BoltenkovSGaussianKernelSEQ, BoltenkovSGaussianKernelOMP,
-                                                       BoltenkovSGaussianKernelTBB, BoltenkovSGaussianKernelSTL, BoltenkovSGaussianKernelALL>(
-    PPC_SETTINGS_boltenkov_s_gaussian_kernel);
+const auto kAllPerfTasks =
+    ppc::util::MakeAllPerfTasks<InType, BoltenkovSGaussianKernelSEQ, BoltenkovSGaussianKernelOMP,
+                                BoltenkovSGaussianKernelTBB, BoltenkovSGaussianKernelSTL, BoltenkovSGaussianKernelALL>(
+        PPC_SETTINGS_boltenkov_s_gaussian_kernel);
 
 const auto kGtestValues = ppc::util::TupleToGTestValues(kAllPerfTasks);
 

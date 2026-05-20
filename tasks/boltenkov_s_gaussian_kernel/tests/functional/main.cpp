@@ -110,7 +110,6 @@ const auto kTestTasksList = std::tuple_cat(
     ppc::util::AddFuncTask<BoltenkovSGaussianKernelALL, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel),
     ppc::util::AddFuncTask<BoltenkovSGaussianKernelSTL, InType>(kTestParam, PPC_SETTINGS_boltenkov_s_gaussian_kernel));
 
-
 const auto kGtestValues = ppc::util::ExpandToValues(kTestTasksList);
 
 const auto kPerfTestName = BoltenkovSRunFuncTestsProcesses::PrintFuncTestName<BoltenkovSRunFuncTestsProcesses>;
