@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <fstream>
 #include <ios>
+#include <random>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -26,19 +27,47 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
     if (!file_stream.is_open()) {
       throw std::runtime_error("Error opening file!\n");
     }
-    constexpr std::size_t kMaxSize = 1000;
+
+    constexpr std::size_t kMinSizeForGen = 1000;
+    constexpr std::size_t kMaxSize = 2000;
     int m = -1;
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
     file_stream.read(reinterpret_cast<char *>(&n), sizeof(int));
-    if (file_stream.fail() || m <= 0 || n <= 0 || std::cmp_greater(n, kMaxSize) || std::cmp_greater(m, kMaxSize)) {
-      throw std::runtime_error("invalid input data!\n");
+    if (file_stream.fail()) {
+      throw std::runtime_error("Failed to read matrix dimensions from file");
     }
+
+    if (m <= 0 || n <= 0 || std::cmp_greater(n, kMaxSize) || std::cmp_greater(m, kMaxSize)) {
+      throw std::runtime_error("Matrix dimensions exceed maximum allowed size (2000)");
+    }
+
+    if (n < static_cast<int>(kMinSizeForGen) || m < static_cast<int>(kMinSizeForGen)) {
+      n = static_cast<int>(kMaxSize);
+      m = static_cast<int>(kMaxSize);
+      std::get<0>(data) = static_cast<std::size_t>(n);
+      std::get<1>(data) = static_cast<std::size_t>(m);
+      std::vector<std::vector<int>> &mtr = std::get<2>(data);
+      mtr.resize(static_cast<std::size_t>(n));
+
+      std::mt19937 gen(42);
+      std::uniform_int_distribution<int> dist(0, 255);
+
+      for (int i = 0; i < n; ++i) {
+        mtr[i].resize(static_cast<std::size_t>(m));
+        for (int j = 0; j < m; ++j) {
+          mtr[i][j] = dist(gen);
+        }
+      }
+      file_stream.close();
+      return;
+    }
+
     std::get<0>(data) = static_cast<std::size_t>(n);
     std::get<1>(data) = static_cast<std::size_t>(m);
     std::vector<std::vector<int>> &mtr = std::get<2>(data);
     mtr.resize(static_cast<std::size_t>(n));
-    for (int i = 0; i < n; i++) {
+    for (int i = 0; i < n; ++i) {
       mtr[i].resize(static_cast<std::size_t>(m));
       file_stream.read(reinterpret_cast<char *>(mtr[i].data()), static_cast<std::streamsize>(sizeof(int) * m));
       if (file_stream.fail()) {

@@ -25,10 +25,16 @@ class BoltenkovSGaussianKernelALL : public BaseTask {
   bool PostProcessingImpl() override;
 
   void BcastSizes(int &n, int &m, int rank);
-  void ScatterRows(const std::vector<std::vector<int>> &global_data, std::vector<std::vector<int>> &local_halo,
-                   int &local_start_row, int &local_rows, int m, int rank, int size);
-  void GatherResults(const std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m,
-                     int rank, int size);
+  static void ScatterRows(std::vector<std::vector<int>> &global_data, std::vector<std::vector<int>> &local_halo,
+                          int &local_start_row, int &local_rows, int m, int rank, int size);
+  void GatherResults(std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m, int rank,
+                     int size);
+  void GatherResultsRoot(std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m,
+                         int size);
+  void GatherResultsOthers(std::vector<std::vector<int>> &local_res, int local_start_row, int local_rows, int m);
+
+  std::vector<std::vector<int>> ApplyGaussianFilter(const std::vector<std::vector<int>> &local_halo,
+                                                    int local_start_row, int local_rows, int m);
 };
 
 }  // namespace boltenkov_s_gaussian_kernel
