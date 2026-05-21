@@ -6,7 +6,6 @@
 #include <random>
 #include <stdexcept>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "boltenkov_s_gaussian_kernel/all/include/ops_all.hpp"
@@ -29,8 +28,8 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Error opening file!\n");
     }
 
-    constexpr std::size_t kMinSizeForGen = 1000;
-    constexpr std::size_t kMaxSize = 2000;
+    const int kMinSizeForGen = 1000;
+    const int kMaxSize = 2000;
     int m = -1;
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
@@ -39,13 +38,13 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Failed to read matrix dimensions from file");
     }
 
-    if (m <= 0 || n <= 0 || std::cmp_greater(n, kMaxSize) || std::cmp_greater(m, kMaxSize)) {
+    if (m <= 0 || n <= 0 || n > kMaxSize || m > kMaxSize) {
       throw std::runtime_error("Matrix dimensions exceed maximum allowed size (2000)");
     }
 
-    if (static_cast<size_t>(n) < kMinSizeForGen || static_cast<size_t>(m) < kMinSizeForGen) {
-      n = static_cast<int>(kMaxSize);
-      m = static_cast<int>(kMaxSize);
+    if (n < kMinSizeForGen || m < kMinSizeForGen) {
+      n = kMaxSize;
+      m = kMaxSize;
       std::get<0>(data) = static_cast<std::size_t>(n);
       std::get<1>(data) = static_cast<std::size_t>(m);
       std::vector<std::vector<int>> &mtr = std::get<2>(data);

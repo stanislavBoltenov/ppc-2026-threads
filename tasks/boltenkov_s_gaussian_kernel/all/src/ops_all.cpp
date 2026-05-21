@@ -96,7 +96,7 @@ void BoltenkovSGaussianKernelALL::SendRowsToOneProcess(int proc, int rows_per_pr
   MPI_Send(&p_rows, 1, MPI_INT, proc, 3, MPI_COMM_WORLD);
 
   for (int i = 0; i < p_halo_rows; ++i) {
-    auto &row = global_data[p_halo_first + i];
+    const auto &row = global_data[p_halo_first + i];
     MPI_Send(row.data(), m, MPI_INT, proc, 4 + i, MPI_COMM_WORLD);
   }
 }
