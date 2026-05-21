@@ -28,8 +28,8 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Error opening file!\n");
     }
 
-    const int kMinSizeForGen = 1000;
-    const int kMaxSize = 2000;
+    const int k_min_size_for_gen = 1000;
+    const int k_max_size = 2000;
     int m = -1;
     int n = -1;
     file_stream.read(reinterpret_cast<char *>(&m), sizeof(int));
@@ -38,13 +38,13 @@ class BoltenkovSRunPerfTestProcesses : public ppc::util::BaseRunPerfTests<InType
       throw std::runtime_error("Failed to read matrix dimensions from file");
     }
 
-    if (m <= 0 || n <= 0 || n > kMaxSize || m > kMaxSize) {
+    if (m <= 0 || n <= 0 || n > k_max_size || m > k_max_size) {
       throw std::runtime_error("Matrix dimensions exceed maximum allowed size (2000)");
     }
 
-    if (n < kMinSizeForGen || m < kMinSizeForGen) {
-      n = kMaxSize;
-      m = kMaxSize;
+    if (n < k_min_size_for_gen || m < k_min_size_for_gen) {
+      n = k_max_size;
+      m = k_max_size;
       std::get<0>(data) = static_cast<std::size_t>(n);
       std::get<1>(data) = static_cast<std::size_t>(m);
       std::vector<std::vector<int>> &mtr = std::get<2>(data);
