@@ -90,9 +90,9 @@ void BoltenkovSGaussianKernelALL::BcastSizes(int &n, int &m, int rank) {
 void BoltenkovSGaussianKernelALL::SendRowsToOneProcess(int proc, int rows_per_proc, int n, int m,
                                                        const std::vector<std::vector<int>> &global_data) {
   long long p_start_ll = static_cast<long long>(proc) * rows_per_proc;
-  long long p_end_ll = std::min(p_start_ll + rows_per_proc, static_cast<long long>(n)) - 1;
+  long long p_end_ll = std::min(p_start_ll + static_cast<long long>(rows_per_proc), static_cast<long long>(n)) - 1;
 
-  if (p_start_ll > INT_MAX || p_end_ll > INT_MAX || p_start_ll < 0) {
+  if (p_start_ll < 0 || p_start_ll > INT_MAX || p_end_ll < 0 || p_end_ll > INT_MAX) {
     int zero = 0;
     MPI_Send(&zero, 1, MPI_INT, proc, 0, MPI_COMM_WORLD);
     return;
@@ -172,8 +172,19 @@ void BoltenkovSGaussianKernelALL::ScatterRows(std::vector<std::vector<int>> &glo
   }
   int rows_per_proc = static_cast<int>(rows_per_proc_ll);
 
-  local_start_row = rank * rows_per_proc;
-  int local_end_row = std::min(local_start_row + rows_per_proc, n) - 1;
+  long long local_start_row_ll = static_cast<long long>(rank) * rows_per_proc;
+  if (local_start_row_ll < 0 || local_start_row_ll > INT_MAX) {
+    local_rows = 0;
+    return;
+  }
+  local_start_row = static_cast<int>(local_start_row_ll);
+
+  long long local_end_row_ll = std::min(local_start_row_ll + rows_per_proc_ll, static_cast<long long>(n)) - 1;
+  if (local_end_row_ll < -1 || local_end_row_ll > INT_MAX) {
+    local_rows = 0;
+    return;
+  }
+  int local_end_row = static_cast<int>(local_end_row_ll);
   local_rows = (local_start_row < n) ? (local_end_row - local_start_row + 1) : 0;
 
   if (rank == 0) {
@@ -197,12 +208,16 @@ void BoltenkovSGaussianKernelALL::GatherResultsRoot(std::vector<std::vector<int>
   for (int proc = 1; proc < size; ++proc) {
     int p_rows = 0;
     MPI_Recv(&p_rows, 1, MPI_INT, proc, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    if (p_rows == 0) {
+    if (p_rows <= 0) {
       continue;
     }
 
     int p_start = 0;
     MPI_Recv(&p_start, 1, MPI_INT, proc, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+
+    if (m <= 0) {
+      continue;
+    }
 
     std::vector<std::vector<int>> p_res(p_rows, std::vector<int>(m));
     for (int i = 0; i < p_rows; ++i) {
