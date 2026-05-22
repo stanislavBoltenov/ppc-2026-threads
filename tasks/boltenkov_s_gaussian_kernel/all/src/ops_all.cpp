@@ -281,7 +281,7 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   std::size_t n_size_t = std::get<0>(GetInput());
   std::size_t m_size_t = 0;
   if (!GetOutput().empty()) {
-    m_size_t = static_cast<int>(GetOutput()[0].size());
+    m_size_t = GetOutput()[0].size();
   }
 
   if (n_size_t > INT_MAX - 2 || m_size_t > INT_MAX - 2) {
