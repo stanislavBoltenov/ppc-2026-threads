@@ -50,14 +50,17 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  auto n_size_t = std::get<0>(GetInput());
-  auto m_size_t = std::get<1>(GetInput());
-  if (n_size_t > INT_MAX - 2 || m_size_t > INT_MAX - 2) {
-    return false;
-  }
   int n_val = 0;
   int m_val = 0;
+
   if (rank == 0) {
+    auto n_size_t = std::get<0>(GetInput());
+    auto m_size_t = std::get<1>(GetInput());
+
+    if (n_size_t > INT_MAX - 2 || m_size_t > INT_MAX - 2) {
+      return false;
+    }
+
     n_val = static_cast<int>(n_size_t);
     m_val = static_cast<int>(m_size_t);
   }
@@ -217,7 +220,7 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   int halo_first = std::max(0, local_start_row - 1);
   int halo_rows = static_cast<int>(local_halo.size());
 
-  if (local_rows > INT_MAX - 2 || m > INT_MAX - 2) {
+  if (local_rows > INT_MAX - 2 || m > INT_MAX - 2 || local_rows <= 0 || m <= 0) {
     return {};
   }
 
@@ -259,7 +262,12 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int n = static_cast<int>(GetOutput().size());
-  int m = static_cast<int>(GetOutput()[0].size());
+  int m = 0;
+
+  if (!GetOutput().empty()) {
+    m = static_cast<int>(GetOutput()[0].size());
+  }
+
   BcastSizes(n, m, rank);
 
   std::vector<std::vector<int>> global_data = std::vector<std::vector<int>>();
