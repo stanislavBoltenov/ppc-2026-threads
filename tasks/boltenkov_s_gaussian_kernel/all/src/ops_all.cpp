@@ -224,7 +224,6 @@ void BoltenkovSGaussianKernelALL::GatherResults(std::vector<std::vector<int>> &l
 
 std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
     const std::vector<std::vector<int>> &local_halo, int local_start_row, int local_rows, int m) {
-
   if (local_rows <= 0 || m <= 0) {
     return {};
   }
