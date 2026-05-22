@@ -67,6 +67,10 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
+  if (n_val < 0 || m_val < 0) {
+    return false;
+  }
+
   GetOutput().resize(n_val);
   for (int i = 0; i < n_val; ++i) {
     GetOutput()[i].resize(m_val);
@@ -117,9 +121,11 @@ void BoltenkovSGaussianKernelALL::FillLocalHaloForRoot(int local_start_row, int 
   int halo_last = std::min(n - 1, local_end_row + 1);
   int halo_rows = halo_last - halo_first + 1;
 
-  local_halo.resize(halo_rows, std::vector<int>(m));
-  for (int i = 0; i < halo_rows; ++i) {
-    local_halo[i] = global_data[halo_first + i];
+  if (halo_rows > 0 && m > 0) {
+    local_halo.resize(halo_rows, std::vector<int>(m));
+    for (int i = 0; i < halo_rows; ++i) {
+      local_halo[i] = global_data[halo_first + i];
+    }
   }
 }
 
@@ -128,7 +134,7 @@ void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_ro
   int recv_halo_rows = 0;
   MPI_Recv(&recv_halo_rows, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  if (recv_halo_rows == 0) {
+  if (recv_halo_rows <= 0 || m <= 0) {
     local_rows = 0;
     return;
   }
@@ -137,10 +143,11 @@ void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_ro
   MPI_Recv(&recv_halo_first, 1, MPI_INT, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   MPI_Recv(&local_start_row, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   MPI_Recv(&local_rows, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-
-  local_halo.resize(recv_halo_rows, std::vector<int>(m));
-  for (int i = 0; i < recv_halo_rows; ++i) {
-    MPI_Recv(local_halo[i].data(), m, MPI_INT, 0, 4 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+  if (recv_halo_rows > 0 && m > 0) {
+    local_halo.resize(static_cast<std::size_t>(recv_halo_rows), std::vector<int>(m));
+    for (int i = 0; i < recv_halo_rows; ++i) {
+      MPI_Recv(local_halo[i].data(), m, MPI_INT, 0, 4 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+    }
   }
 }
 
@@ -217,14 +224,22 @@ void BoltenkovSGaussianKernelALL::GatherResults(std::vector<std::vector<int>> &l
 
 std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
     const std::vector<std::vector<int>> &local_halo, int local_start_row, int local_rows, int m) {
-  int halo_first = std::max(0, local_start_row - 1);
-  int halo_rows = static_cast<int>(local_halo.size());
 
-  if (local_rows > INT_MAX - 2 || m > INT_MAX - 2 || local_rows <= 0 || m <= 0) {
+  if (local_rows <= 0 || m <= 0) {
     return {};
   }
 
-  std::vector<std::vector<int>> tmp(local_rows + 2, std::vector<int>(m + 2, 0));
+  int halo_first = std::max(0, local_start_row - 1);
+  int halo_rows = static_cast<int>(local_halo.size());
+
+  if (local_rows > INT_MAX - 2 || m > INT_MAX - 2) {
+    return {};
+  }
+
+  std::size_t rows = static_cast<std::size_t>(local_rows) + 2;
+  std::size_t cols = static_cast<std::size_t>(m) + 2;
+
+  std::vector<std::vector<int>> tmp(rows, std::vector<int>(cols, 0));
 
   for (int i = 0; i < local_rows + 2; ++i) {
     int global_row = local_start_row - 1 + i;
@@ -237,7 +252,7 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
     }
   }
 
-  std::vector<std::vector<int>> local_res(local_rows, std::vector<int>(m, 0));
+  std::vector<std::vector<int>> local_res(static_cast<size_t>(local_rows), std::vector<int>(static_cast<size_t>(m), 0));
   const auto &kernel = kernel_;
   int shift = shift_;
 
@@ -261,13 +276,21 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  int n = static_cast<int>(GetOutput().size());
+  int n = 0;
   int m = 0;
 
+  std::size_t n_size_t = std::get<0>(GetInput());
+  std::size_t m_size_t = 0;
   if (!GetOutput().empty()) {
-    m = static_cast<int>(GetOutput()[0].size());
+    m_size_t = static_cast<int>(GetOutput()[0].size());
   }
 
+  if (n_size_t > INT_MAX - 2 || m_size_t > INT_MAX - 2) {
+    return false;
+  }
+
+  n = static_cast<int>(n_size_t);
+  m = static_cast<int>(m_size_t);
   BcastSizes(n, m, rank);
 
   std::vector<std::vector<int>> global_data = std::vector<std::vector<int>>();
