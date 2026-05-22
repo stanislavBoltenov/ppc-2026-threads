@@ -89,8 +89,17 @@ void BoltenkovSGaussianKernelALL::BcastSizes(int &n, int &m, int rank) {
 
 void BoltenkovSGaussianKernelALL::SendRowsToOneProcess(int proc, int rows_per_proc, int n, int m,
                                                        const std::vector<std::vector<int>> &global_data) {
-  int p_start = proc * rows_per_proc;
-  int p_end = std::min(p_start + rows_per_proc, n) - 1;
+  long long p_start_ll = static_cast<long long>(proc) * rows_per_proc;
+  long long p_end_ll = std::min(p_start_ll + rows_per_proc, static_cast<long long>(n)) - 1;
+
+  if (p_start_ll > INT_MAX || p_end_ll > INT_MAX || p_start_ll < 0) {
+    int zero = 0;
+    MPI_Send(&zero, 1, MPI_INT, proc, 0, MPI_COMM_WORLD);
+    return;
+  }
+
+  int p_start = static_cast<int>(p_start_ll);
+  int p_end = static_cast<int>(p_end_ll);
   int p_rows = (p_start < n) ? (p_end - p_start + 1) : 0;
 
   if (p_rows == 0) {
@@ -155,7 +164,13 @@ void BoltenkovSGaussianKernelALL::ScatterRows(std::vector<std::vector<int>> &glo
                                               std::vector<std::vector<int>> &local_halo, int &local_start_row,
                                               int &local_rows, int m, int rank, int size) {
   int n = static_cast<int>(global_data.size());
-  int rows_per_proc = (n + size - 1) / size;
+
+  long long rows_per_proc_ll = (static_cast<long long>(n) + size - 1) / size;
+  if (rows_per_proc_ll > INT_MAX) {
+    local_rows = 0;
+    return;
+  }
+  int rows_per_proc = static_cast<int>(rows_per_proc_ll);
 
   local_start_row = rank * rows_per_proc;
   int local_end_row = std::min(local_start_row + rows_per_proc, n) - 1;
