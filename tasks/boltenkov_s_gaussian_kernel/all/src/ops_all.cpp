@@ -258,32 +258,52 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
     return {};
   }
 
-  int halo_first = std::max(0, local_start_row - 1);
-  int halo_rows = static_cast<int>(local_halo.size());
-
   if (local_rows > INT_MAX - 2 || m > INT_MAX - 2) {
     return {};
   }
 
-  std::size_t rows = static_cast<std::size_t>(local_rows) + 2;
-  std::size_t cols = static_cast<std::size_t>(m) + 2;
+  const int halo_first = std::max(0, local_start_row - 1);
+  const int halo_rows = static_cast<int>(local_halo.size());
 
-  std::vector<std::vector<int>> tmp(rows, std::vector<int>(cols, 0));
+  const std::size_t rows = static_cast<std::size_t>(local_rows) + 2;
+  const std::size_t cols = static_cast<std::size_t>(m) + 2;
+
+  if (rows > (std::numeric_limits<std::size_t>::max() / sizeof(std::vector<int>))) {
+    return {};
+  }
+
+  if (cols > (std::numeric_limits<std::size_t>::max() / sizeof(int))) {
+    return {};
+  }
+
+  std::vector<std::vector<int>> tmp;
+  tmp.resize(rows);
+
+  for (std::size_t i = 0; i < rows; ++i) {
+    tmp[i].resize(cols, 0);
+  }
 
   for (int i = 0; i < local_rows + 2; ++i) {
-    int global_row = local_start_row - 1 + i;
+    const int global_row = local_start_row - 1 + i;
+
     if (global_row >= halo_first && global_row < halo_first + halo_rows) {
       const auto &src = local_halo[global_row - halo_first];
-      auto dst = tmp[i].begin() + 1;
+
       for (int j = 0; j < m; ++j) {
-        dst[j] = src[j];
+        tmp[static_cast<std::size_t>(i)][static_cast<std::size_t>(j + 1)] = src[j];
       }
     }
   }
 
-  std::vector<std::vector<int>> local_res(static_cast<size_t>(local_rows), std::vector<int>(static_cast<size_t>(m), 0));
+  std::vector<std::vector<int>> local_res;
+  local_res.resize(static_cast<std::size_t>(local_rows));
+
+  for (int i = 0; i < local_rows; ++i) {
+    local_res[static_cast<std::size_t>(i)].resize(static_cast<std::size_t>(m), 0);
+  }
+
   const auto &kernel = kernel_;
-  int shift = shift_;
+  const int shift = shift_;
 
 #pragma omp parallel for num_threads(ppc::util::GetNumThreads()) default(none) \
     shared(tmp, local_res, local_rows, m, kernel, shift)
@@ -293,9 +313,11 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
                 (tmp[i + 1][j - 1] * kernel[1][0]) + (tmp[i + 1][j] * kernel[1][1]) +
                 (tmp[i + 1][j + 1] * kernel[1][2]) + (tmp[i + 2][j - 1] * kernel[2][0]) +
                 (tmp[i + 2][j] * kernel[2][1]) + (tmp[i + 2][j + 1] * kernel[2][2]);
+
       local_res[i][j - 1] = val >> shift;
     }
   }
+
   return local_res;
 }
 
