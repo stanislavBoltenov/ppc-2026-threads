@@ -52,7 +52,7 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
 
   auto n_size_t = std::get<0>(GetInput());
   auto m_size_t = std::get<1>(GetInput());
-  if (n_size_t > INT_MAX || m_size_t > INT_MAX) {
+  if (n_size_t > INT_MAX - 2 || m_size_t > INT_MAX - 2) {
     return false;
   }
   int n_val = 0;
