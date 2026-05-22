@@ -49,11 +49,16 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+  auto n_size_t = std::get<0>(GetInput());
+  auto m_size_t = std::get<1>(GetInput());
+  if (n_size_t > INT_MAX || m_size_t > INT_MAX) {
+    return false;
+  }
   int n_val = 0;
   int m_val = 0;
   if (rank == 0) {
-    n_val = static_cast<int>(std::get<0>(GetInput()));
-    m_val = static_cast<int>(std::get<1>(GetInput()));
+    n_val = static_cast<int>(n_size_t);
+    m_val = static_cast<int>(m_size_t);
   }
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
