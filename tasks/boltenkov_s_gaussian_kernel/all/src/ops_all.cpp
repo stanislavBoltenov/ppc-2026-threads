@@ -217,6 +217,10 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   int halo_first = std::max(0, local_start_row - 1);
   int halo_rows = static_cast<int>(local_halo.size());
 
+  if (local_rows > INT_MAX - 2 || m > INT_MAX - 2) {
+    return {};
+  }
+
   std::vector<std::vector<int>> tmp(local_rows + 2, std::vector<int>(m + 2, 0));
 
   for (int i = 0; i < local_rows + 2; ++i) {
