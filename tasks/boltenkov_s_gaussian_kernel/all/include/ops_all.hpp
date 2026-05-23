@@ -36,6 +36,10 @@ class BoltenkovSGaussianKernelALL : public BaseTask {
   std::vector<std::vector<int>> ApplyGaussianFilter(const std::vector<std::vector<int>> &local_halo,
                                                     int local_start_row, int local_rows, int m);
 
+  static std::vector<std::vector<int>> CreateValidMatrix(int rows, int cols);
+  static void FillTmpFromHalo(std::vector<std::vector<int>> &tmp, const std::vector<std::vector<int>> &local_halo,
+                              int local_start_row, int local_rows, int m);
+
   static void SendRowsToOneProcess(int proc, int rows_per_proc, int n, int m,
                                    const std::vector<std::vector<int>> &global_data);
 

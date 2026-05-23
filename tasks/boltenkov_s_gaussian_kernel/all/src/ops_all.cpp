@@ -244,7 +244,7 @@ void BoltenkovSGaussianKernelALL::GatherResults(std::vector<std::vector<int>> &l
   }
 }
 
-static std::vector<std::vector<int>> CreateValidMatrix(int rows, int cols) {
+std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::CreateValidMatrix(int rows, int cols) {
   std::vector<std::vector<int>> result;
   if (rows > 0 && cols > 0 && rows < 1e6 && cols < 1e6) {
     result.resize(rows);
@@ -255,8 +255,9 @@ static std::vector<std::vector<int>> CreateValidMatrix(int rows, int cols) {
   return result;
 }
 
-static void FillTmpFromHalo(std::vector<std::vector<int>> &tmp, const std::vector<std::vector<int>> &local_halo,
-                            int local_start_row, int local_rows, int m) {
+void BoltenkovSGaussianKernelALL::FillTmpFromHalo(std::vector<std::vector<int>> &tmp,
+                                                  const std::vector<std::vector<int>> &local_halo, int local_start_row,
+                                                  int local_rows, int m) {
   int halo_first = std::max(0, local_start_row - 1);
   int halo_rows = static_cast<int>(local_halo.size());
 
