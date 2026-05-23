@@ -50,20 +50,20 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  std::size_t n_val = std::get<0>(GetInput());
-  std::size_t m_val = std::get<1>(GetInput());
+  int n_val = std::get<0>(GetInput());
+  int m_val = std::get<1>(GetInput());
 
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (n_val < 1e6) {
-    GetOutput().resize(n_val);
+  if (n_val < 1e6 && n_val > 0) {
+    GetOutput().resize(static_cast<std::size_t>(n_val));
   } else {
     return false;
   }
-  for (std::size_t i = 0; i < n_val; ++i) {
-    if (m_val < 1e6) {
-      GetOutput()[i].resize(m_val);
+  for (int i = 0; i < n_val; ++i) {
+    if (m_val < 1e6 && m_val > 0) {
+      GetOutput()[i].resize(static_cast<std::size_t>(m_val));
     } else {
       return false;
     }
@@ -116,7 +116,10 @@ void BoltenkovSGaussianKernelALL::FillLocalHaloForRoot(int local_start_row, int 
   int halo_rows = halo_last - halo_first + 1;
 
   if (halo_rows > 0 && m > 0 && halo_rows < 1e6 && m < 1e6) {
-    local_halo.resize(halo_rows, std::vector<int>(m));
+    local_halo.resize(halo_rows);
+    for (int i = 0; i < halo_rows; ++i) {
+      local_halo[i].resize(m);
+    }
   } else {
     return;
   }
@@ -142,7 +145,10 @@ void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_ro
   MPI_Recv(&local_rows, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
   if (recv_halo_rows > 0 && m > 0 && recv_halo_rows < 1e6 && m < 1e6) {
-    local_halo.resize(recv_halo_rows, std::vector<int>(m));
+    local_halo.resize(recv_halo_rows);
+    for (int i = 0; i < recv_halo_rows; ++i) {
+      local_halo[i].resize(m);
+    }
   } else {
     return;
   }
@@ -191,7 +197,10 @@ void BoltenkovSGaussianKernelALL::GatherResultsRoot(std::vector<std::vector<int>
 
     std::vector<std::vector<int>> p_res = std::vector<std::vector<int>>();
     if (p_rows > 0 && m > 0 && p_rows < 1e6 && m < 1e6) {
-      p_res.resize(p_rows, std::vector<int>(m));
+      p_res.resize(p_rows);
+      for (int i = 0; i < p_rows; ++i) {
+        p_res[i].resize(m);
+      }
     } else {
       return;
     }
@@ -236,7 +245,10 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   int rows = local_rows + 2;
   int cols = m + 2;
   if (rows > 0 && cols > 0 && rows < 1e6 && cols < 1e6) {
-    tmp.resize(rows, std::vector<int>(cols, 0));
+    tmp.resize(rows);
+    for (int i = 0; i < rows; ++i) {
+      tmp[i].resize(cols, 0);
+    }
   } else {
     return {};
   }
@@ -254,7 +266,10 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
 
   std::vector<std::vector<int>> local_res = std::vector<std::vector<int>>();
   if (local_rows > 0 && m > 0 && local_rows < 1e6 && m < 1e6) {
-    local_res.resize(local_rows, std::vector<int>(m, 0));
+    local_res.resize(local_rows);
+    for (int i = 0; i < local_rows; ++i) {
+      local_res[i].resize(m, 0);
+    }
   } else {
     return {};
   }
