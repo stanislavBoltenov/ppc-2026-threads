@@ -50,9 +50,17 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   int rank = 0;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-  int n_val = std::get<0>(GetInput());
-  int m_val = std::get<1>(GetInput());
-
+  auto n_size_t = std::get<0>(GetInput());
+  auto m_size_t = std::get<1>(GetInput());
+  if (n_size_t > INT_MAX || m_size_t > INT_MAX) {
+    return false;
+  }
+  int n_val = 0;
+  int m_val = 0;
+  if (rank == 0) {
+    n_val = static_cast<int>(n_size_t);
+    m_val = static_cast<int>(m_size_t);
+  }
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -236,22 +244,21 @@ void BoltenkovSGaussianKernelALL::GatherResults(std::vector<std::vector<int>> &l
   }
 }
 
-std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
-    const std::vector<std::vector<int>> &local_halo, int local_start_row, int local_rows, int m) {
+static std::vector<std::vector<int>> CreateValidMatrix(int rows, int cols) {
+  std::vector<std::vector<int>> result;
+  if (rows > 0 && cols > 0 && rows < 1e6 && cols < 1e6) {
+    result.resize(rows);
+    for (int i = 0; i < rows; ++i) {
+      result[i].resize(cols, 0);
+    }
+  }
+  return result;
+}
+
+static void FillTmpFromHalo(std::vector<std::vector<int>> &tmp, const std::vector<std::vector<int>> &local_halo,
+                            int local_start_row, int local_rows, int m) {
   int halo_first = std::max(0, local_start_row - 1);
   int halo_rows = static_cast<int>(local_halo.size());
-
-  std::vector<std::vector<int>> tmp = std::vector<std::vector<int>>();
-  int rows = local_rows + 2;
-  int cols = m + 2;
-  if (rows > 0 && cols > 0 && rows < 1e6 && cols < 1e6) {
-    tmp.resize(rows);
-    for (int i = 0; i < rows; ++i) {
-      tmp[i].resize(cols, 0);
-    }
-  } else {
-    return {};
-  }
 
   for (int i = 0; i < local_rows + 2; ++i) {
     int global_row = local_start_row - 1 + i;
@@ -263,14 +270,19 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
       }
     }
   }
+}
 
-  std::vector<std::vector<int>> local_res = std::vector<std::vector<int>>();
-  if (local_rows > 0 && m > 0 && local_rows < 1e6 && m < 1e6) {
-    local_res.resize(local_rows);
-    for (int i = 0; i < local_rows; ++i) {
-      local_res[i].resize(m, 0);
-    }
-  } else {
+std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
+    const std::vector<std::vector<int>> &local_halo, int local_start_row, int local_rows, int m) {
+  auto tmp = CreateValidMatrix(local_rows + 2, m + 2);
+  if (tmp.empty()) {
+    return {};
+  }
+
+  FillTmpFromHalo(tmp, local_halo, local_start_row, local_rows, m);
+
+  auto local_res = CreateValidMatrix(local_rows, m);
+  if (local_res.empty()) {
     return {};
   }
 
