@@ -52,7 +52,7 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
 
   std::size_t n_val = std::get<0>(GetInput());
   std::size_t m_val = std::get<1>(GetInput());
-  
+
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -61,11 +61,10 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
     for (std::size_t i = 0; i < n_val; ++i) {
       GetOutput()[i].resize(m_val);
     }
-  }
-  else {
+  } else {
     return false;
   }
-  
+
   return true;
 }
 
@@ -118,7 +117,6 @@ void BoltenkovSGaussianKernelALL::FillLocalHaloForRoot(int local_start_row, int 
       local_halo[i] = global_data[halo_first + i];
     }
   }
-  
 }
 
 void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_row, int &local_rows,
@@ -223,8 +221,7 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   std::vector<std::vector<int>> tmp = std::vector<std::vector<int>>();
   if (local_rows + 2 > 0 && m + 2 > 0) {
     tmp.resize(local_rows + 2, std::vector<int>(m + 2, 0));
-  }
-  else {
+  } else {
     return {};
   }
 
@@ -242,8 +239,7 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   std::vector<std::vector<int>> local_res = std::vector<std::vector<int>>();
   if (local_rows > 0 && m > 0) {
     local_res.resize(local_rows, std::vector<int>(m, 0));
-  }
-  else {
+  } else {
     return {};
   }
   const auto &kernel = kernel_;
