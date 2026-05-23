@@ -56,13 +56,17 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   MPI_Bcast(&n_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_val, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (n_val < INT_MAX && m_val < INT_MAX) {
+  if (n_val < 1e6) {
     GetOutput().resize(n_val);
-    for (std::size_t i = 0; i < n_val; ++i) {
-      GetOutput()[i].resize(m_val);
-    }
   } else {
     return false;
+  }
+  for (std::size_t i = 0; i < n_val; ++i) {
+    if (m_val < 1e6) {
+      GetOutput()[i].resize(m_val);
+    } else {
+      return false;
+    }
   }
 
   return true;
@@ -111,11 +115,14 @@ void BoltenkovSGaussianKernelALL::FillLocalHaloForRoot(int local_start_row, int 
   int halo_last = std::min(n - 1, local_end_row + 1);
   int halo_rows = halo_last - halo_first + 1;
 
-  if (halo_rows > 0 && m > 0) {
+  if (halo_rows > 0 && m > 0 && halo_rows < 1e6 && m < 1e6) {
     local_halo.resize(halo_rows, std::vector<int>(m));
-    for (int i = 0; i < halo_rows; ++i) {
-      local_halo[i] = global_data[halo_first + i];
-    }
+  } else {
+    return;
+  }
+
+  for (int i = 0; i < halo_rows; ++i) {
+    local_halo[i] = global_data[halo_first + i];
   }
 }
 
@@ -134,11 +141,13 @@ void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_ro
   MPI_Recv(&local_start_row, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   MPI_Recv(&local_rows, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  if (recv_halo_rows > 0 && m > 0) {
+  if (recv_halo_rows > 0 && m > 0 && halo_rows < 1e6 && m < 1e6) {
     local_halo.resize(recv_halo_rows, std::vector<int>(m));
-    for (int i = 0; i < recv_halo_rows; ++i) {
-      MPI_Recv(local_halo[i].data(), m, MPI_INT, 0, 4 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    }
+  } else {
+    return;
+  }
+  for (int i = 0; i < recv_halo_rows; ++i) {
+    MPI_Recv(local_halo[i].data(), m, MPI_INT, 0, 4 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   }
 }
 
@@ -180,7 +189,12 @@ void BoltenkovSGaussianKernelALL::GatherResultsRoot(std::vector<std::vector<int>
     int p_start = 0;
     MPI_Recv(&p_start, 1, MPI_INT, proc, 11, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-    std::vector<std::vector<int>> p_res(p_rows, std::vector<int>(m));
+    std::vector<std::vector<int>> p_res = std::vector<std::vector<int>>();
+    if (p_rows > 0 && m > 0 && p_rows < 1e6 && m < 1e6) {
+      p_res.resize(p_rows, std::vector<int>(m));
+    } else {
+      return;
+    }
     for (int i = 0; i < p_rows; ++i) {
       MPI_Recv(p_res[i].data(), m, MPI_INT, proc, 12 + i, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
     }
@@ -219,8 +233,10 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   int halo_rows = static_cast<int>(local_halo.size());
 
   std::vector<std::vector<int>> tmp = std::vector<std::vector<int>>();
-  if (local_rows + 2 > 0 && m + 2 > 0) {
-    tmp.resize(local_rows + 2, std::vector<int>(m + 2, 0));
+  int rows = local_rows + 2;
+  int cols = m + 2;
+  if (rows > 0 && cols > 0 && rows < 1e6 && cols < 1e6) {
+    tmp.resize(rows, std::vector<int>(cols, 0));
   } else {
     return {};
   }
@@ -237,7 +253,7 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   }
 
   std::vector<std::vector<int>> local_res = std::vector<std::vector<int>>();
-  if (local_rows > 0 && m > 0) {
+  if (local_rows > 0 && m > 0 && local_rows < 1e6 && m < 1e6) {
     local_res.resize(local_rows, std::vector<int>(m, 0));
   } else {
     return {};
@@ -268,6 +284,9 @@ bool BoltenkovSGaussianKernelALL::RunImpl() {
 
   int n = static_cast<int>(GetOutput().size());
   int m = static_cast<int>(GetOutput()[0].size());
+  if (n <= 0 || m <= 0 || n >= 1e6 || m >= 1e6) {
+    return false;
+  }
   BcastSizes(n, m, rank);
 
   std::vector<std::vector<int>> global_data = std::vector<std::vector<int>>();
