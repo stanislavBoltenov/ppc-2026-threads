@@ -242,6 +242,7 @@ std::vector<std::vector<int>> BoltenkovSGaussianKernelALL::ApplyGaussianFilter(
   } else {
     return {};
   }
+
   const auto &kernel = kernel_;
   int shift = shift_;
 
