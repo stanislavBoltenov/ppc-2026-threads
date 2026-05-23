@@ -73,7 +73,7 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
   MPI_Bcast(&n_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
   MPI_Bcast(&m_int, 1, MPI_INT, 0, MPI_COMM_WORLD);
 
-  if (n_int <= 0 || m_int <= 0) {
+  if (n_int == 0 || m_int == 0) {
     return false;
   }
 
@@ -83,10 +83,6 @@ bool BoltenkovSGaussianKernelALL::PreProcessingImpl() {
     out[i].resize(static_cast<std::size_t>(m_int), 0);
   }
   return true;
-}
-
-static inline int safe_cast_to_int(std::size_t val) {
-  return static_cast<int>(val);
 }
 
 static void scatter_rows(int rank, int size, const std::vector<std::vector<int>> &global_data,
@@ -131,16 +127,16 @@ static void scatter_rows(int rank, int size, const std::vector<std::vector<int>>
       std::size_t p_halo_last = (p_start + p_rows == n) ? n - 1 : p_start + p_rows;
       std::size_t p_halo_rows = p_halo_last - p_halo_first + 1;
 
-      int p_rows_int = safe_cast_to_int(p_rows);
-      int p_start_int = safe_cast_to_int(p_start);
-      int p_halo_rows_int = safe_cast_to_int(p_halo_rows);
+      int p_rows_int = static_cast<int>(p_rows);
+      int p_start_int = static_cast<int>(p_start);
+      int p_halo_rows_int = static_cast<int>(p_halo_rows);
       MPI_Send(&p_rows_int, 1, MPI_INT, proc, 0, MPI_COMM_WORLD);
       MPI_Send(&p_start_int, 1, MPI_INT, proc, 1, MPI_COMM_WORLD);
       MPI_Send(&p_halo_rows_int, 1, MPI_INT, proc, 2, MPI_COMM_WORLD);
 
       for (std::size_t i = 0; i < p_halo_rows; ++i) {
         const auto &row = global_data[p_halo_first + i];
-        MPI_Send(const_cast<int *>(row.data()), safe_cast_to_int(m), MPI_INT, proc, 10 + static_cast<int>(i),
+        MPI_Send(const_cast<int *>(row.data()), static_cast<int>(m), MPI_INT, proc, 10 + static_cast<int>(i),
                  MPI_COMM_WORLD);
       }
     }
@@ -164,7 +160,7 @@ static void scatter_rows(int rank, int size, const std::vector<std::vector<int>>
 
     local_halo.resize(halo_rows, std::vector<int>(m, 0));
     for (std::size_t i = 0; i < halo_rows; ++i) {
-      MPI_Recv(local_halo[i].data(), safe_cast_to_int(m), MPI_INT, 0, 10 + static_cast<int>(i), MPI_COMM_WORLD,
+      MPI_Recv(local_halo[i].data(), static_cast<int>(m), MPI_INT, 0, 10 + static_cast<int>(i), MPI_COMM_WORLD,
                MPI_STATUS_IGNORE);
     }
   }
@@ -172,14 +168,12 @@ static void scatter_rows(int rank, int size, const std::vector<std::vector<int>>
 
 static std::vector<std::vector<int>> apply_gaussian_filter(const std::vector<std::vector<int>> &local_halo,
                                                            std::size_t local_start_row, std::size_t local_rows,
-                                                           std::size_t m, const std::vector<std::vector<int>> &kernel,
-                                                           int shift) {
+                                                           std::size_t m, const int kernel[3][3], int shift) {
   if (local_rows == 0 || m == 0) {
     return {};
   }
 
   std::vector<std::vector<int>> result(local_rows, std::vector<int>(m, 0));
-
   std::size_t halo_offset = (local_start_row == 0) ? 0 : 1;
 
 #pragma omp parallel for num_threads(ppc::util::GetNumThreads()) default(none) \
@@ -213,6 +207,7 @@ static void gather_results(int rank, int size, const std::vector<std::vector<int
     for (std::size_t i = 0; i < local_rows; ++i) {
       output[local_start_row + i] = local_res[i];
     }
+
     for (int proc = 1; proc < size; ++proc) {
       int p_rows_int = 0;
       MPI_Recv(&p_rows_int, 1, MPI_INT, proc, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
@@ -226,18 +221,18 @@ static void gather_results(int rank, int size, const std::vector<std::vector<int
       std::size_t p_start = static_cast<std::size_t>(p_start_int);
 
       for (std::size_t i = 0; i < p_rows; ++i) {
-        MPI_Recv(output[p_start + i].data(), safe_cast_to_int(m), MPI_INT, proc, 200 + static_cast<int>(i),
+        MPI_Recv(output[p_start + i].data(), static_cast<int>(m), MPI_INT, proc, 200 + static_cast<int>(i),
                  MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       }
     }
   } else {
     if (local_rows > 0) {
-      int p_rows_int = safe_cast_to_int(local_rows);
-      int p_start_int = safe_cast_to_int(local_start_row);
+      int p_rows_int = static_cast<int>(local_rows);
+      int p_start_int = static_cast<int>(local_start_row);
       MPI_Send(&p_rows_int, 1, MPI_INT, 0, 100, MPI_COMM_WORLD);
       MPI_Send(&p_start_int, 1, MPI_INT, 0, 101, MPI_COMM_WORLD);
       for (std::size_t i = 0; i < local_rows; ++i) {
-        MPI_Send(const_cast<int *>(local_res[i].data()), safe_cast_to_int(m), MPI_INT, 0, 200 + static_cast<int>(i),
+        MPI_Send(const_cast<int *>(local_res[i].data()), static_cast<int>(m), MPI_INT, 0, 200 + static_cast<int>(i),
                  MPI_COMM_WORLD);
       }
     } else {
