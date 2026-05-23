@@ -168,7 +168,8 @@ static void scatter_rows(int rank, int size, const std::vector<std::vector<int>>
 
 static std::vector<std::vector<int>> apply_gaussian_filter(const std::vector<std::vector<int>> &local_halo,
                                                            std::size_t local_start_row, std::size_t local_rows,
-                                                           std::size_t m, const std::vector<std::vector<int>> kernel, int shift) {
+                                                           std::size_t m, const std::vector<std::vector<int>> kernel,
+                                                           int shift) {
   if (local_rows == 0 || m == 0) {
     return {};
   }
