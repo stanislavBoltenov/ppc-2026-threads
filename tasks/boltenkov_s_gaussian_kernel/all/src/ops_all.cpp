@@ -141,7 +141,7 @@ void BoltenkovSGaussianKernelALL::ReceiveRowsOnWorker(int m, int &local_start_ro
   MPI_Recv(&local_start_row, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
   MPI_Recv(&local_rows, 1, MPI_INT, 0, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 
-  if (recv_halo_rows > 0 && m > 0 && halo_rows < 1e6 && m < 1e6) {
+  if (recv_halo_rows > 0 && m > 0 && recv_halo_rows < 1e6 && m < 1e6) {
     local_halo.resize(recv_halo_rows, std::vector<int>(m));
   } else {
     return;
