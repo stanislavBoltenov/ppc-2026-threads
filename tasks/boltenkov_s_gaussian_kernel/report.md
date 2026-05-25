@@ -93,13 +93,13 @@
 
 ### SEQ (baseline)
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | SEQ | 1 | 0.1900944106 | 1.00 | 1.00 |
 
 ### OMP (OpenMP)
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | OMP | 1 | 0.1890049766 | 1.01 | 1.01 |
 | OMP | 2 | 0.1294406932 | 1.47 | 0.73 |
@@ -109,7 +109,7 @@
 
 ### TBB (Intel OneTBB)
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | TBB | 1 | 0.1909888784 | 1.00 | 1.00 |
 | TBB | 2 | 0.1259294970 | 1.51 | 0.75 |
@@ -119,7 +119,7 @@
 
 ### STL (std::thread)
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | STL | 1 | 0.1864327250 | 1.02 | 1.02 |
 | STL | 2 | 0.1178237696 | 1.61 | 0.81 |
@@ -131,7 +131,7 @@
 
 Конфигурация – `processes × threads`.
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | ALL (1×1) | 1 | 0.2068619310 | 0.92 | 0.92 |
 | ALL (1×2) | 2 | 0.1361154042 | 1.40 | 0.70 |
@@ -195,35 +195,35 @@ mpirun -np 2 ./ppc_func_tests --gtest_filter="*boltenkov_s_gaussian_kernel_all_e
 - SEQ
 
 ```bash
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_seq_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_seq_enabled"
 ```
 
 - OMP
 
 ```bash
 export PPC_NUM_THREADS=12
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_omp_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_omp_enabled"
 ```
 
 - STL
 
 ```bash
 export PPC_NUM_THREADS=12
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_stl_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_stl_enabled"
 ```
 
 - TBB
 
 ```bash
 export PPC_NUM_THREADS=12
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_tbb_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_tbb_enabled"
 ```
 
 - ALL
 
 ```bash
 export PPC_NUM_THREADS=6
-mpirun -np 2 ./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_all_enabled"
+mpirun -np 2 ./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_all_enabled"
 ```
 
 ---
@@ -247,10 +247,10 @@ mpirun -np 2 ./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_all_ena
 
 ### Максимальные ускорения
 
-| Backend | Workers | Speedup |
-| --- | --- | --- |
-| SEQ | 1 | 1.00 |
-| OMP | 12 | 4.31 |
-| TBB | 12 | 5.09 |
-| STL | 12 | 4.78 |
-| ALL (1×6) | 6 | 2.74 |
+| Technology | Workers | Speedup | Efficiency |
+| --- | --- | --- | --- |
+| SEQ | 1 | 1.00 | 1.00 |
+| OMP | 12 | 4.31 | 0.36 |
+| TBB | 12 | 5.09 | 0.42 |
+| STL | 12 | 4.78 | 0.40 |
+| ALL (1×6) | 6 | 2.74 | 0.46 |

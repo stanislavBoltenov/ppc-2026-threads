@@ -188,7 +188,7 @@ cd build/bin
 ### Тесты производительности
 
 ```bash
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_all_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_all_enabled"
 ```
 
 ---
@@ -204,7 +204,7 @@ cd build/bin
 
 Конфигурация – `processes × threads`.
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | ALL (1×1) | 1 | 0.2068619310 | 0.92 | 0.92 |
 | ALL (1×2) | 2 | 0.1361154042 | 1.40 | 0.70 |

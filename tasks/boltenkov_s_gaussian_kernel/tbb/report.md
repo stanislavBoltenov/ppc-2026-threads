@@ -149,7 +149,7 @@ cd build/bin
 ### Тесты производительности
 
 ```bash
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_tbb_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_tbb_enabled"
 ```
 
 ---
@@ -163,7 +163,7 @@ cd build/bin
 | Размер изображения | 2000×2000 пикселей |
 | Тип данных | int (значения 0–255) |
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | TBB | 1 | 0.1909888784 | 1.00 | 1.00 |
 | TBB | 2 | 0.1259294970 | 1.51 | 0.75 |

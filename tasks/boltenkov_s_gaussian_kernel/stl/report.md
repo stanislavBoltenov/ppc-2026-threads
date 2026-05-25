@@ -160,7 +160,7 @@ cd build/bin
 ### Тесты производительности
 
 ```bash
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_stl_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_stl_enabled"
 ```
 
 ---
@@ -174,7 +174,7 @@ cd build/bin
 | Размер изображения | 2000×2000 пикселей |
 | Тип данных | int (значения 0–255) |
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | STL | 1 | 0.1864327250 | 1.02 | 1.02 |
 | STL | 2 | 0.1178237696 | 1.61 | 0.81 |

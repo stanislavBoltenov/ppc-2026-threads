@@ -154,7 +154,7 @@ cd build/bin
 ### Тесты производительности
 
 ```bash
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_omp_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_omp_enabled"
 ```
 
 ---
@@ -170,7 +170,7 @@ cd build/bin
 
 Результаты измерений
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | OMP | 1 | 0.1890049766 | 1.01 | 1.01 |
 | OMP | 2 | 0.1294406932 | 1.47 | 0.73 |

@@ -157,7 +157,7 @@ cd build/bin
 ### Тесты производительности
 
 ```bash
-./ppc_perf_tests --gtest_filter="*krymova_k_gaussian_filter_seq_enabled"
+./ppc_perf_tests --gtest_filter="*boltenkov_s_gaussian_kernel_seq_enabled"
 ```
 
 ---
@@ -173,7 +173,7 @@ cd build/bin
 
 Базовое время выполнения (baseline)
 
-| Backend | Workers | Time (s) | Speedup | Efficiency |
+| Technology | Workers | Time (s) | Speedup | Efficiency |
 | --- | --- | --- | --- | --- |
 | SEQ | 1 | 0.1900944106 | 1.00 | 1.00 |
 
